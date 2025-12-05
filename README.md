@@ -165,3 +165,20 @@ Write **8–12 lines** describing how you would implement a Stripe Checkout flow
 3. Share the link.
 
 Good luck.
+
+
+```
+# TASK - 5 ANSWER
+
+```
+
+For Stripe Checkout, I would create a Checkout Session on the backend when the user wants to pay the application fee. 
+I would save a payment_request in the database with the session ID and link it to the application so I can track the status. 
+After that, the user is redirected to Stripe’s hosted checkout page.
+
+Stripe sends a webhook after the payment is completed. 
+In the webhook handler, I check the event type and confirm the payment is successful. 
+Then I update the payment_request row to “paid” and also update the related application’s payment status or stage. 
+If the payment fails or doesn’t finish, I store that as well.
+
+This keeps the application record in sync with whatever happened in Stripe.

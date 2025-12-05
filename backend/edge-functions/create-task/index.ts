@@ -32,30 +32,53 @@ serve(async (req: Request) => {
     const { application_id, task_type, due_at } = body;
 
     // TODO: validate application_id, task_type, due_at
-    // - check task_type in VALID_TYPES
-    // - parse due_at and ensure it's in the future
+    if (!application_id || !task_type || !due_at) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!VALID_TYPES.includes(task_type)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid task type" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const due = new Date(due_at);
+    if (isNaN(due.getTime()) || due <= new Date()) {
+      return new Response(
+        JSON.stringify({ error: "due_at must be a valid future date" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     // TODO: insert into tasks table using supabase client
-
-    // Example:
-    // const { data, error } = await supabase
-    //   .from("tasks")
-    //   .insert({ ... })
-    //   .select()
-    //   .single();
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert({
+        application_id,
+        type: task_type,
+        due_at,
+      })
+      .select("id")
+      .single();
 
     // TODO: handle error and return appropriate status code
+    if (error) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     // Example successful response:
-    // return new Response(JSON.stringify({ success: true, task_id: data.id }), {
-    //   status: 200,
-    //   headers: { "Content-Type": "application/json" },
-    // });
-
     return new Response(
-      JSON.stringify({ error: "Not implemented. Please complete this function." }),
-      { status: 501, headers: { "Content-Type": "application/json" } },
+      JSON.stringify({ success: true, task_id: data.id }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
     );
+
   } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ error: "Internal server error" }), {

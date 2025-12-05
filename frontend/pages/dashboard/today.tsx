@@ -24,13 +24,22 @@ export default function TodayDashboard() {
       // - Use supabase.from("tasks").select(...)
       // - You can do date filtering in SQL or client-side
 
-      // Example:
-      // const { data, error } = await supabase
-      //   .from("tasks")
-      //   .select("*")
-      //   .eq("status", "open");
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
 
-      setTasks([]);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .gte("due_at", start.toISOString())
+        .lte("due_at", end.toISOString())
+        .neq("status", "completed");
+
+      if (error) throw error;
+
+      setTasks(data || []);
     } catch (err: any) {
       console.error(err);
       setError("Failed to load tasks");
@@ -44,6 +53,16 @@ export default function TodayDashboard() {
       // TODO:
       // - Update task.status to 'completed'
       // - Re-fetch tasks or update state optimistically
+
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: "completed" })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // refresh the list
+      fetchTasks();
     } catch (err: any) {
       console.error(err);
       alert("Failed to update task");
